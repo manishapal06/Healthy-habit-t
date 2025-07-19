@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthy Habit Tracker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #E0F7FA 0%, #B2EBF2 50%, #80DEEA 100%);
+    }
+    .habit-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen gradient-bg">
+  <!-- Firebase Config -->
+  <script>
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAagD4GJGUB_r2IfW4vE3T_x-Wjnu45Tnw",
+  authDomain: "tracker-d3ab6.firebaseapp.com",
+  projectId: "tracker-d3ab6",
+  storageBucket: "tracker-d3ab6.firebasestorage.app",
+  messagingSenderId: "860111931792",
+  appId: "1:860111931792:web:c76125675934b8129ccb15",
+  measurementId: "G-SE69LH7HF1"
+};
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
+
+  <!-- Auth Container -->
+  <div id="auth-container" class="flex flex-col items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-md p-8 bg-white rounded-lg shadow-xl">
+      <div class="text-center mb-8">
+        <img  src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/dcc41447-2a93-49a1-a55f-789d0b20f877.png" alt="VitalTrack logo with leaf and checkmark symbol in teal and white colors" class="mx-auto mb-4 rounded-full w-[200px] ">
+<h1 class="text-3xl font-bold text-teal-600">Healthy Habit Tracker</h1>
+        <p class="text-gray-600">Build healthy habits, one day at a time</p>
+      </div>
+      
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+          <input type="password" id="password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+        </div>
+        <div>
+          <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+            Sign In
+          </button>
+        </div>
+        <p class="text-center text-sm text-gray-600">
+          Don't have an account? 
+          <a href="#" id="show-signup" class="font-medium text-teal-600 hover:text-teal-500">Sign up</a>
+        </p>
+      </form>
+
+      <form id="signup-form" class="hidden space-y-4">
+        <div>
+          <label for="signup-name" class="block text-sm font-medium text-gray-700">Name</label>
+          <input type="text" id="signup-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+        </div>
+        <div>
+          <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="email" id="signup-email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+        </div>
+        <div>
+          <label for="signup-password" class="block text-sm font-medium text-gray-700">Password</label>
+          <input type="password" id="signup-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+        </div>
+        <div>
+          <label for="confirm-password" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+          <input type="password" id="confirm-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+        </div>
+        <div class="flex space-x-4">
+          <button type="submit" class="w-1/2 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+            Sign Up
+          </button>
+          <button type="button" id="show-login" class="w-1/2 flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+            Back to Login
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Container -->
+  <div id="dashboard-container" class="hidden min-h-screen p-4 max-w-6xl mx-auto">
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8 p-4 bg-white rounded-lg shadow-sm">
+      <div>
+        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/9d8f4fe4-a94e-4427-adf6-0bf2b346f8c6.png" alt="Healthy Habit Tracker mini logo in teal color" class="h-12">
+      </div>
+      <div class="flex items-center space-x-4">
+        <span id="user-name" class="font-medium text-teal-600">Hello, User</span>
+        <button id="sign-out" class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- Wellness Score & Stats -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h3 class="text-lg font-medium text-gray-700 mb-2">Wellness Score</h3>
+        <div class="flex items-center">
+          <span id="wellness-score" class="text-4xl font-bold text-teal-600">0</span>
+          <span class="ml-2 text-gray-500">/100</span>
+        </div>
+        <div class="mt-2 h-2 bg-gray-200 rounded-full">
+          <div id="wellness-bar" class="h-full bg-teal-500 rounded-full" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h3 class="text-lg font-medium text-gray-700 mb-2">Current Streak</h3>
+        <div class="flex items-center">
+          <span id="current-streak" class="text-4xl font-bold text-teal-600">0</span>
+          <span class="ml-2 text-gray-500">days</span>
+        </div>
+        <p class="mt-2 text-sm text-gray-500">Keep it going!</p>
+      </div>
+
+      <div class="bg-white p-6 rounded-lg shadow-sm">
+        <h3 class="text-lg font-medium text-gray-700 mb-2">Habits Tracked</h3>
+        <div class="flex items-center">
+          <span id="habits-tracked" class="text-4xl font-bold text-teal-600">0</span>
+          <span class="ml-2 text-gray-500">this week</span>
+        </div>
+        <p class="mt-2 text-sm text-gray-500">Tracking progress daily</p>
+      </div>
+    </section>
+
+    <!-- Habit Categories -->
+    <section class="mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Your Habits</h2>
+        <button id="add-habit" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm">
+          + Add Habit
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Meditation -->
+        <div class="habit-card bg-white p-5 rounded-lg shadow-sm transition duration-200 ease-in-out">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-purple-600">Meditation</h3>
+            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/5bd640d3-a52b-408e-bb78-ad985b1e31bb.png" alt="Purple meditation icon showing a person in lotus position" class="w-8 h-8">
+          </div>
+          <ul id="meditation-list" class="space-y-3">
+            <!-- Habits will be added here -->
+          </ul>
+        </div>
+
+        <!-- Sleep -->
+        <div class="habit-card bg-white p-5 rounded-lg shadow-sm transition duration-200 ease-in-out">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-blue-600">Sleep</h3>
+            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/0551bc88-fd26-4829-8ca2-7c9b44e0878f.png" alt="Blue moon and stars icon representing sleep" class="w-8 h-8">
+          </div>
+          <ul id="sleep-list" class="space-y-3">
+            <!-- Habits will be added here -->
+          </ul>
+        </div>
+
+        <!-- Fitness -->
+        <div class="habit-card bg-white p-5 rounded-lg shadow-sm transition duration-200 ease-in-out">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-green-600">Fitness</h3>
+            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/ec3463ab-3a2b-4223-8080-d37b6a5a8fc5.png" alt="Green dumbbell icon representing fitness" class="w-8 h-8">
+          </div>
+          <ul id="fitness-list" class="space-y-3">
+            <!-- Habits will be added here -->
+          </ul>
+        </div>
+
+        <!-- Hydration -->
+        <div class="habit-card bg-white p-5 rounded-lg shadow-sm transition duration-200 ease-in-out">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-blue-400">Hydration</h3>
+            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/ea0a6246-e983-4252-8b5f-414036cec813.png" alt="Light blue water drop icon representing hydration" class="w-8 h-8">
+          </div>
+          <ul id="hydration-list" class="space-y-3">
+            <!-- Habits will be added here -->
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Weekly Overview -->
+    <section class="bg-white p-6 rounded-lg shadow-sm mb-8">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Weekly Overview</h2>
+      <div class="p-4 bg-gray-50 rounded-lg">
+        <div class="grid grid-cols-8 gap-2">
+          <div></div>
+          <div class="text-center text-xs text-gray-500">Mon</div>
+          <div class="text-center text-xs text-gray-500">Tue</div>
+          <div class="text-center text-xs text-gray-500">Wed</div>
+          <div class="text-center text-xs text-gray-500">Thu</div>
+          <div class="text-center text-xs text-gray-500">Fri</div>
+          <div class="text-center text-xs text-gray-500">Sat</div>
+          <div class="text-center text-xs text-gray-500">Sun</div>
+          
+          <!-- Rows for each habit category -->
+          <div class="text-xs text-gray-700">Meditation</div>
+          <div id="med-mon" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="med-tue" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="med-wed" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="med-thu" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="med-fri" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="med-sat" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="med-sun" class="h-5 w-5 rounded-full mx-auto"></div>
+          
+          <div class="text-xs text-gray-700">Sleep</div>
+          <div id="sle-mon" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="sle-tue" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="sle-wed" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="sle-thu" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="sle-fri" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="sle-sat" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="sle-sun" class="h-5 w-5 rounded-full mx-auto"></div>
+          
+          <div class="text-xs text-gray-700">Fitness</div>
+          <div id="fit-mon" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="fit-tue" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="fit-wed" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="fit-thu" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="fit-fri" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="fit-sat" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="fit-sun" class="h-5 w-5 rounded-full mx-auto"></div>
+          
+          <div class="text-xs text-gray-700">Hydration</div>
+          <div id="hyd-mon" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="hyd-tue" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="hyd-wed" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="hyd-thu" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="hyd-fri" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="hyd-sat" class="h-5 w-5 rounded-full mx-auto"></div>
+          <div id="hyd-sun" class="h-5 w-5 rounded-full mx-auto"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Add Habit Modal -->
+  <div id="add-habit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">Add New Habit</h3>
+        <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="habit-form">
+        <div class="mb-4">
+          <label for="habit-name" class="block text-sm font-medium text-gray-700 mb-1">Habit Name</label>
+          <input type="text" id="habit-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+        </div>
+        <div class="mb-4">
+          <label for="habit-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select id="habit-category" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+            <option value="meditation">Meditation</option>
+            <option value="sleep">Sleep</option>
+            <option value="fitness">Fitness</option>
+            <option value="hydration">Hydration</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="habit-target" class="block text-sm font-medium text-gray-700 mb-1">Target (per day/week)</label>
+          <input type="number" id="habit-target" min="1" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-teal-500 focus:border-teal-500">
+        </div>
+        <div class="flex justify-end space-x-3">
+          <button type="button" id="cancel-habit" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+            Save Habit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App JavaScript -->
+  <script>
+    // DOM Elements
+    const authContainer = document.getElementById('auth-container');
+    const dashboardContainer = document.getElementById('dashboard-container');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const showSignup = document.getElementById('show-signup');
+    const showLogin = document.getElementById('show-login');
+    const signOutBtn = document.getElementById('sign-out');
+    const userName = document.getElementById('user-name');
+    const wellnessScore = document.getElementById('wellness-score');
+    const currentStreak = document.getElementById('current-streak');
+    const habitsTracked = document.getElementById('habits-tracked');
+    const addHabitBtn = document.getElementById('add-habit');
+    const addHabitModal = document.getElementById('add-habit-modal');
+    const closeModalBtn = document.getElementById('close-modal');
+    const cancelHabitBtn = document.getElementById('cancel-habit');
+    const habitForm = document.getElementById('habit-form');
+    const wellnessBar = document.getElementById('wellness-bar');
+
+    // Toggle between login and signup forms
+    showSignup.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginForm.classList.add('hidden');
+      signupForm.classList.remove('hidden');
+    });
+
+    showLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginForm.classList.remove('hidden');
+      signupForm.classList.add('hidden');
+    });
+
+    // Modal controls
+    addHabitBtn.addEventListener('click', () => {
+      addHabitModal.classList.remove('hidden');
+    });
+
+    closeModalBtn.addEventListener('click', closeModal);
+    cancelHabitBtn.addEventListener('click', closeModal);
+
+    function closeModal() {
+      addHabitModal.classList.add('hidden');
+      habitForm.reset();
+    }
+
+    // Handle login
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          loadDashboard(userCredential.user);
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    });
+
+    // Handle signup
+    signupForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('signup-name').value;
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      
+      if (password !== confirmPassword) {
+        alert("Passwords don't match");
+        return;
+      }
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          // Save additional user info
+          return db.collection('users').doc(userCredential.user.uid).set({
+            name: name,
+            email: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        })
+        .then(() => {
+          loadDashboard(auth.currentUser);
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    });
+
+    // Handle sign out
+    signOutBtn.addEventListener('click', () => {
+      auth.signOut().then(() => {
+        authContainer.classList.remove('hidden');
+        dashboardContainer.classList.add('hidden');
+      });
+    });
+
+    // Load dashboard
+    function loadDashboard(user) {
+      db.collection('users').doc(user.uid).get()
+        .then((doc) => {
+          if (doc.exists) {
+            userName.textContent = `Hello, ${doc.data().name}`;
+          }
+          
+          authContainer.classList.add('hidden');
+          dashboardContainer.classList.remove('hidden');
+          
+          // Load user habits
+          loadHabits(user.uid);
+          calculateWellnessScore(user.uid);
+        });
+    }
+
+    // Load user habits
+    function loadHabits(userId) {
+      const categories = ['meditation', 'sleep', 'fitness', 'hydration'];
+      
+      categories.forEach(category => {
+        const listElement = document.getElementById(`${category}-list`);
+        listElement.innerHTML = '';
+        
+        db.collection('habits')
+          .where('userId', '==', userId)
+          .where('category', '==', category)
+          .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                addHabitToDOM(change.doc.data(), change.doc.id, listElement);
+              } else if (change.type === 'removed') {
+                const habitElement = document.getElementById(`habit-${change.doc.id}`);
+                if (habitElement) {
+                  habitElement.remove();
+                }
+              }
+            });
+            
+            updateHabitsTracked();
+            updateWeeklyOverview();
+          });
+      });
+    }
+
+    // Add habit to DOM
+    function addHabitToDOM(habit, habitId, listElement) {
+      const habitElement = document.createElement('li');
+      habitElement.id = `habit-${habitId}`;
+      habitElement.className = 'flex justify-between items-center p-2 bg-gray-50 rounded';
+      
+      habitElement.innerHTML = `
+        <div class="flex items-center">
+          <input type="checkbox" class="h-5 w-5 text-teal-600 rounded focus:ring-teal-500 mr-3" id="check-${habitId}">
+          <span>${habit.name}</span>
+        </div>
+        <div class="flex items-center">
+          <span class="text-sm text-gray-500 mr-2">${habit.current}/${habit.target}</span>
+          <button class="text-red-500 hover:text-red-700" data-habit-id="${habitId}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      `;
+      
+      listElement.appendChild(habitElement);
+      
+      // Handle checkbox toggle
+      const checkbox = document.getElementById(`check-${habitId}`);
+      checkbox.addEventListener('change', (e) => {
+        const increment = e.target.checked ? 1 : -1;
+        db.collection('habits').doc(habitId).update({
+          current: firebase.firestore.FieldValue.increment(increment),
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+      
+      // Handle delete
+      const deleteBtn = habitElement.querySelector('button');
+      deleteBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to delete this habit?')) {
+          db.collection('habits').doc(habitId).delete();
+        }
+      });
+    }
+
+    // Add new habit
+    habitForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById('habit-name').value;
+      const category = document.getElementById('habit-category').value;
+      const target = parseInt(document.getElementById('habit-target').value);
+      const userId = auth.currentUser.uid;
+      
+      db.collection('habits').add({
+        name: name,
+        category: category,
+        target: target,
+        current: 0,
+        userId: userId,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(() => {
+        closeModal();
+      })
+      .catch((error) => {
+        alert(error.message);
+      });
+    });
+
+    // Calculate wellness score
+    function calculateWellnessScore(userId) {
+      db.collection('habits')
+        .where('userId', '==', userId)
+        .get()
+        .then((snapshot) => {
+          let score = 0;
+          let maxPossible = 0;
+          
+          snapshot.forEach((doc) => {
+            const habit = doc.data();
+            maxPossible += habit.target;
+            score += habit.current;
+          });
+          
+          const percentage = maxPossible > 0 ? Math.min(100, Math.round((score / maxPossible) * 100)) : 0;
+          wellnessScore.textContent = percentage;
+          wellnessBar.style.width = `${percentage}%`;
+          
+          // Simple streak calculation (based on habits tracked today)
+          const today = new Date().toISOString().split('T')[0];
+          db.collection('habits')
+            .where('userId', '==', userId)
+            .where('lastUpdated', '>=', today)
+            .get()
+            .then((todaySnapshot) => {
+              currentStreak.textContent = todaySnapshot.size > 0 ? 
+                Math.min(todaySnapshot.size, 7) : 0;
+            });
+        });
+    }
+
+    // Update habits tracked this week
+    function updateHabitsTracked() {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      
+      db.collection('habits')
+        .where('userId', '==', auth.currentUser.uid)
+        .where('lastUpdated', '>=', oneWeekAgo)
+        .get()
+        .then((snapshot) => {
+          habitsTracked.textContent = snapshot.size;
+        });
+    }
+
+    // Update weekly overview
+    function updateWeeklyOverview() {
+      const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      const categories = ['med', 'sle', 'fit', 'hyd'];
+      
+      categories.forEach(category => {
+        days.forEach(day => {
+          const element = document.getElementById(`${category}-${day}`);
+          if (element) {
+            element.className = 'h-5 w-5 rounded-full mx-auto bg-gray-200';
+          }
+        });
+      });
+      
+      // Simple visualization - in a real app, you'd fetch historical data
+      categories.forEach(category => {
+        days.forEach((day, index) => {
+          const element = document.getElementById(`${category}-${day}`);
+          if (element && Math.random() > 0.3) { // Random for demo, in reality you'd use actual data
+            element.className = `h-5 w-5 rounded-full mx-auto bg-${category === 'med' ? 'purple' : 
+                                category === 'sle' ? 'blue' : 
+                                category === 'fit' ? 'green' : 'blue'}-500`;
+          }
+        });
+      });
+    }
+
+    // Check auth state on load
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        loadDashboard(user);
+      } else {
+        authContainer.classList.remove('hidden');
+        dashboardContainer.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
+
